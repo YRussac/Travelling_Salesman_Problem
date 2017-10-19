@@ -55,8 +55,8 @@ def random_path(P, trajectory):
         trajectory.append(trajectory[0])
         return trajectory
     else:
-        P_copy[:, trajectory[-1]] = 0
         P_copy = normalize(P_copy)
+        P_copy[:, trajectory[-1]] = 0
         nextPlace = np.random.choice(list(range(n)), size=1, p=P_copy[trajectory[-1], :].tolist()[0])[0]
         trajectory.append(nextPlace)
         return random_path(P_copy, trajectory)
@@ -154,5 +154,3 @@ def TSP(rho, d, N, distanceMatrix, alpha, init):
 
 # Example of experiment
 print(TSP(rho=0.1, d=5, N=1000, distanceMatrix=dMat, alpha=0.99, init=1))
-
-
