@@ -1,10 +1,15 @@
 # importation
 import numpy as np
 import math
+from visualization import heatmap
 
 # setting examples
-P = 1/2*np.matrix(np.ones((3, 3)))-1/2*np.identity(3)
-dMat = np.matrix("1 2 3; 1 4 5; 6 7 1")
+np.random.seed(6)
+NVilles = 20
+P = 1/(NVilles-1)*np.matrix(np.ones((NVilles, NVilles)))-1/(NVilles-1)*np.identity(NVilles)
+dMat = np.matrix(np.random.randint(1,NVilles,size=(NVilles,NVilles)))
+for i in range(NVilles):
+    dMat[i,i] = 0
 
 # Main function for non-parallelized
 
@@ -140,11 +145,17 @@ def TSP(rho, d, N, distanceMatrix, alpha, init):
     n = distanceMatrix.shape[0] # number of cities
     transition_Matrix = 1/(n-1)*np.matrix(np.ones((n, n))) - 1/(n-1)*np.identity(n)
     gamma_list = []
+    i = 0
+    t0 = time.time()
     while not(gamma_stable(gamma_list, d)):
+        print('Iteration {}: {}'.format(i, time.time()-t0))
+        print(gamma_list)
+        i += 1
         pathsMatrix = random_multi_path(transition_Matrix, init, N)
         ordered_scores = np.sort(cost_multi_path(distanceMatrix, pathsMatrix=pathsMatrix))
+        print(ordered_scores.shape)
         Gamma = ordered_scores[0, math.ceil(rho*N)]
-        gamma_list += [Gamma]
+        gamma_list.append(Gamma)
         transition_Matrix = update_transition_matrix(transition_matrix=transition_Matrix,
                                                      pathsMatrix=pathsMatrix,
                                                      gamma=Gamma, distanceMatrix=distanceMatrix,
@@ -153,4 +164,9 @@ def TSP(rho, d, N, distanceMatrix, alpha, init):
 
 
 # Example of experiment
-print(TSP(rho=0.1, d=5, N=1000, distanceMatrix=dMat, alpha=0.99, init=1))
+import time
+t = time.time()
+print(dMat)
+M = TSP(rho=0.1, d=5, N=10000, distanceMatrix=dMat, alpha=0.99, init=1)
+print(time.time()-t)
+heatmap(M, [str(i) for i in range(10)])
