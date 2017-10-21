@@ -35,7 +35,6 @@ def thread_computation(init, N, gamma, transition_matrix, distanceMatrix, q_coun
     pathsMatrix = nopar.random_multi_path(local_transition_matrix, init, N)
     n = distanceMatrix.shape[0]  # number of cities
     cost_paths = nopar.cost_multi_path(distanceMatrix, pathsMatrix)
-    #output_score = np.sort(cost_paths)
     paths_kept = np.where(cost_paths <= gamma)[1]
     for i in range(n):
         for j in range(n):
@@ -45,37 +44,7 @@ def thread_computation(init, N, gamma, transition_matrix, distanceMatrix, q_coun
                     update_numerator += 1
             output_count[(i, j)] = update_numerator, len(paths_kept)
     q_count.put(output_count)
-    #q_score.put(output_score)
     q_score.put(cost_paths)
-    return
-
-def partial_thread_computation(pathMatrix, cost_paths,
-                               gamma, q_count):
-    """
-    This is the function which will be launched on every core of the machine
-    We will only update the transition matrix given N//4 paths
-    :param N:
-    :param pathMatrix:
-    :param portion:
-    :param cost_paths:
-    :param gamma:
-    :param transition_matrix:
-    :param distanceMatrix:
-    :param q_count:
-    :return:
-    """
-    print('Lancement de partial_thread_computation')
-    output_count = {}
-    n = pathMatrix.shape[1]-1  # difference between number of cities and a tour
-    paths_kept = np.where(cost_paths <= gamma)[1]
-    for i in range(n):
-        for j in range(n):
-            update_numerator = 0
-            for k in paths_kept:
-                if nopar.transition_presence(pathMatrix[k, :], i, j):
-                    update_numerator += 1
-            output_count[(i, j)] = update_numerator, len(paths_kept)
-    q_count.put(output_count)
     return
 
 
@@ -98,16 +67,16 @@ def TSP_thread_parallel_tot(rho, d, N, distanceMatrix, alpha, init):
     while not(nopar.gamma_stable(gamma_list, d)):
         q_count = qu.Queue()
         q_score = qu.Queue()
-        t1 = threading.Thread(name='first_thread', target=partial_thread_computation,
+        t1 = threading.Thread(name='first_thread', target=thread_computation,
                               args=(init, N//4, gamma,
                             transition_Matrix, distanceMatrix, q_count, q_score))
-        t2 = threading.Thread(name='first_thread', target=partial_thread_computation,
+        t2 = threading.Thread(name='first_thread', target=thread_computation,
                             args=(init, N//4, gamma,
                             transition_Matrix,distanceMatrix, q_count, q_score))
-        t3 = threading.Thread(name='first_thread', target=partial_thread_computation,
+        t3 = threading.Thread(name='first_thread', target=thread_computation,
                             args=(init, N//4, gamma,
                             transition_Matrix, distanceMatrix, q_count, q_score))
-        t4 = threading.Thread(name='first_thread', target=partial_thread_computation,
+        t4 = threading.Thread(name='first_thread', target=thread_computation,
                             args=(init, N//4, gamma,
                             transition_Matrix, distanceMatrix, q_count, q_score))
         t1.start()
@@ -139,6 +108,31 @@ def TSP_thread_parallel_tot(rho, d, N, distanceMatrix, alpha, init):
     return transition_Matrix
 
 
+def partial_thread_computation(pathMatrix, cost_paths,
+                               gamma, q_count):
+   """
+   This is the function which will be launched on every core of the machine.
+   We will update the transition matrix with N//4 paths on every cores
+   :param pathMatrix: A matrix containing some paths
+   :param cost_paths: The costs of the associated paths
+   :param gamma: Parameter used for the cross entropy
+   :param q_count: A queue used during the threading procedure
+   :return: Nothing but the q_count queue have a matrix which is appended where we have the required value
+   for the updating process
+   """
+    output_count = {}
+    n = pathMatrix.shape[1]-1  # difference between number of cities and a tour
+    paths_kept = np.where(cost_paths <= gamma)[1]
+    for i in range(n):
+        for j in range(n):
+            update_numerator = 0
+            for k in paths_kept:
+                if nopar.transition_presence(pathMatrix[k, :], i, j):
+                    update_numerator += 1
+            output_count[(i, j)] = update_numerator, len(paths_kept)
+    q_count.put(output_count)
+    return
+
 
 def TSP_thread_parallel_partial(rho, d, N, distanceMatrix, alpha, init):
     """
@@ -163,23 +157,15 @@ def TSP_thread_parallel_partial(rho, d, N, distanceMatrix, alpha, init):
         mat2 = pathsMatrix[N//4: 2*N//4, :]
         mat3 = pathsMatrix[2*N//4: 3*N//4, :]
         mat4 = pathsMatrix[3*N//4:, :]
-        print("taille totale" + str(pathsMatrix.shape))
         cost_paths = nopar.cost_multi_path(distanceMatrix, pathsMatrix=pathsMatrix)
-        print("cout" + str(cost_paths.shape))
         cout1 = cost_paths[0, 0:N//4]
         cout2 = cost_paths[0, N//4: 2*N//4]
         cout3 = cost_paths[0, 2*N//4: 3*N//4]
         cout4 = cost_paths[0, 3*N//4:]
         ordered_scores = np.sort(cost_paths)
         Gamma = ordered_scores[0, math.ceil(rho*N)]
-        print("Gamma =" + str(Gamma))
         gamma_list.append(Gamma)
-
-        print("taille 1ère séquence" + str(pathsMatrix[0:N//4, :].shape))
-        print("taille 2nde séquence" + str(pathsMatrix[N//4:2*N//4, :].shape))
-        print("taille 3ème séquence" + str(pathsMatrix[2*N//4: 3*N//4, :].shape))
-        print("taille 1ère séquence" + str(pathsMatrix[3*N//4:, :].shape))
-
+        print(gamma_list)
         t1 = threading.Thread(name='first_thread', target=partial_thread_computation,
                               args=(mat1, cout1, Gamma, q_count))
         t2 = threading.Thread(name='second_thread', target=partial_thread_computation,
@@ -212,17 +198,17 @@ def TSP_thread_parallel_partial(rho, d, N, distanceMatrix, alpha, init):
 
 
 # Example of experiment
-# t = time.time()
-# print(nopar.TSP(rho=0.1, d=5, N=1000, distanceMatrix=dMat, alpha=0.99, init=1))
-# print(time.time()-t)
+t = time.time()
+print(nopar.TSP(rho=0.1, d=5, N=8000, distanceMatrix=dMat, alpha=0.99, init=1))
+print(time.time()-t)
 
 
 t2 = time.time()
-print(TSP_thread_parallel_partial(rho=0.1, d=5, N=800, distanceMatrix=dMat, alpha=0.99, init=1))
+print(TSP_thread_parallel_partial(rho=0.1, d=5, N=8000, distanceMatrix=dMat, alpha=0.99, init=1))
 print(time.time()-t2)
 
 
 t3 = time.time()
-print(TSP_thread_parallel_tot(rho=0.1, d=5, N=800, distanceMatrix=dMat, alpha=0.99, init=1))
+print(TSP_thread_parallel_tot(rho=0.1, d=5, N=8000, distanceMatrix=dMat, alpha=0.99, init=1))
 print(time.time()-t3)
 

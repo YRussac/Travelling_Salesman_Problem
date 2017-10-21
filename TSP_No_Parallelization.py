@@ -2,12 +2,16 @@
 import numpy as np
 import math
 from visualization import heatmap
+import time
 
 # setting examples
 np.random.seed(6)
 NVilles = 20
 P = 1/(NVilles-1)*np.matrix(np.ones((NVilles, NVilles)))-1/(NVilles-1)*np.identity(NVilles)
-dMat = np.matrix(np.random.randint(1,NVilles,size=(NVilles,NVilles)))
+
+
+# Generation of a distance matrix reproductible
+dMat = np.matrix(np.random.randint(1, NVilles, size=(NVilles, NVilles)))
 for i in range(NVilles):
     dMat[i,i] = 0
 
@@ -86,7 +90,7 @@ def gamma_stable(gList, d):
     :param d: The stability points
     :return: True if and only if the d last terms of the list are equals
     """
-    if (len(gList) < d):
+    if len(gList) < d:
         return False
     else:
         return len(set(gList[-d:])) == 1
@@ -164,9 +168,9 @@ def TSP(rho, d, N, distanceMatrix, alpha, init):
 
 
 # Example of experiment
-import time
-t = time.time()
-print(dMat)
-M = TSP(rho=0.1, d=5, N=10000, distanceMatrix=dMat, alpha=0.99, init=1)
-print(time.time()-t)
-heatmap(M, [str(i) for i in range(10)])
+# t = time.time()
+# print(dMat)
+
+# M = TSP(rho=0.1, d=5, N=10000, distanceMatrix=dMat, alpha=0.99, init=1)
+# print(time.time()-t)
+# heatmap(M, [str(i) for i in range(10)])
