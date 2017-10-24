@@ -95,72 +95,46 @@ def gamma_stable(gList, d):
         return len(set(gList[-d:])) == 1
 
 
-def transition_presence(path, i, j):
+def paths_parallel(l, init, N, distanceMatrix, transition_matrix, d_paths, d_score):
     """
-    :param path: A given path (a tour)
-    :param i: The beginning of the transition
-    :param j: The end point of the transition
-    :return: True if and only if there is a transition between i and j in the tour
-    """
-    res = False
-    indice_value_i = np.where(path == i)[1][0]
-    if indice_value_i == path.shape[1] -1:
-        if path[0, 0] == j:
-            res = True
-    elif path[0, indice_value_i + 1] == j:
-        res = True
-    return res
-
-
-def update_transition_matrix(transition_matrix, pathsMatrix, gamma, distanceMatrix, alpha):
-    """
-    :param transition_matrix: A transition Matrix
-    :param pathsMatrix: A matrix which contains a path in each row
-    :param gamma: One of the cross-entropy parameter
+    :param l: Index of the process
+    :param init: First point of the path
+    :param N: Number of paths simulated
     :param distanceMatrix: The matrix giving the distance between different points in the graph
-    :param alpha: Other parameter of the cross-entropy
-    :return: The transition_matrix updated according to the cross-entropy theory
+    :param transition_matrix: The Markov transition matrix
+    :param d_paths: Empty dictionnary for communication with process
+    :param d_score: Empty dictionnary for communication with process
     """
+    np.random.seed()
     transition_Matrix = transition_matrix.copy()
-    n = distanceMatrix.shape[0]  # number of cities
-    paths_kept = np.where(cost_multi_path(distanceMatrix, pathsMatrix) <= gamma)[1]
-    for i in range(0, n):
-        for j in range(0, n):
-            update_numerator = 0
-            for k in paths_kept:
-                if transition_presence(pathsMatrix[k, :], i, j):
-                    update_numerator += 1
-            transition_Matrix[i, j] = (1-alpha)*transition_Matrix[i, j] + alpha*update_numerator/len(paths_kept)
-    return transition_Matrix
+    pathsMatrix = random_multi_path(transition_Matrix, init, N)
+    cost_paths = cost_multi_path(distanceMatrix, pathsMatrix)
+    output_score = cost_paths
+    d_paths[l] = pathsMatrix
+    d_score[l] = output_score
+    return
 
 
-def TSP(rho, d, N, distanceMatrix, alpha, init):
+def update_count_parallel(l, gamma, cost_paths, pathsMatrix, d_count, d_length):
     """
-    :param rho: A cross entropy parameter
-    :param d: The number of times we want gamma to be the same, higher values should give more optimal paths but
-    more computations
-    :param N: Number of generated paths at each updating phase
-    :param distanceMatrix: The matrix giving the distance between different points in the graph
-    :param alpha: A parameter for the cross-entropy
-    :param init: The initial point for all the cities. We are searching an optimal solution starting from this point
-    :return: For the moment the function returns the transition matrix at the end of the updating phase
+    :param l: Index of the process
+    :param gamma: Threshold
+    :param cost_paths: Vector of the score of each simulated paths_kept
+    :param pathsMatrix: Matrix containing the N previously simulated paths
+    :param d_count: Empty dictionnary for communication with the process
+    :param d_length: Empty dictionnary for communication with the process
     """
-    n = distanceMatrix.shape[0] # number of cities
-    transition_Matrix = 1/(n-1)*np.matrix(np.ones((n, n))) - 1/(n-1)*np.identity(n)
-    gamma_list = []
-    while not(gamma_stable(gamma_list, d)):
-        pathsMatrix = random_multi_path(transition_Matrix, init, N)
-        ordered_scores = np.sort(cost_multi_path(distanceMatrix, pathsMatrix=pathsMatrix))
-        Gamma = ordered_scores[0, math.ceil(rho*N)]
-        gamma_list += [Gamma]
-        transition_Matrix = update_transition_matrix(transition_matrix=transition_Matrix,
-                                                     pathsMatrix=pathsMatrix,
-                                                     gamma=Gamma, distanceMatrix=distanceMatrix,
-                                                     alpha=alpha)
-    return transition_Matrix
+    n = pathsMatrix.shape[1]-1  # number of cities
+    output_count = np.matrix(np.zeros((n,n)))
+    paths_kept = np.where(cost_paths <= gamma)[1]
+    for k in paths_kept:
+        for i in range(pathsMatrix[k].shape[1]-1):
+            output_count[pathsMatrix[k,i], pathsMatrix[k,i+1]] += 1
+    d_count[l] = output_count
+    d_length[l] = len(paths_kept)
 
 
-def TSP_thread_parallel(rho, d, N, distanceMatrix, alpha, init):
+def TSP_process_parallel(rho, d, N, distanceMatrix, alpha, init):
     """
     :param rho: A cross entropy parameter
     :param d: The number of times we want gamma to be the same, higher values should give more optimal paths but
@@ -185,42 +159,37 @@ def TSP_thread_parallel(rho, d, N, distanceMatrix, alpha, init):
         d_count = manager.dict()
         d_length = manager.dict()
         d_score = manager.dict()
-        jobs = [multiprocessing.Process(target=thread_counter,
-                            args=(j,init, N//10, Gamma, transition_Matrix,
-                            distanceMatrix, d_count, d_length, d_score))
-                for j in range(10)]
+        d_paths = manager.dict()
+        # generate paths
+        jobs = [multiprocessing.Process(target=paths_parallel,
+                            args=(j,init, N//4, distanceMatrix,
+                            transition_Matrix,
+                            d_paths, d_score))
+                for j in range(4)]
         for j in jobs:
             j.start()
         for j in jobs:
             j.join()
-        print(d_length)
-        #pathsMatrix = random_multi_path(transition_Matrix, init, N)
-        #ordered_scores = np.sort(cost_multi_path(distanceMatrix, pathsMatrix=pathsMatrix))
+
+        # update gamma
         ordered_scores = np.sort(np.concatenate([d_score[i] for i in d_score.keys()], axis=1))
         Gamma = ordered_scores[0, math.ceil(rho*N)]
         gamma_list.append(Gamma)
+
+        # generate counts for updating transition matrix
+        jobs = [multiprocessing.Process(target=update_count_parallel,
+                            args=(j, Gamma, d_score[j], d_paths[j],
+                            d_count, d_length))
+                for j in range(4)]
+        for j in jobs:
+            j.start()
+        for j in jobs:
+            j.join()
+
         numerator = sum([d_count[i] for i in d_count.keys()])
         denominator = sum([d_length[i] for i in d_length.keys()])
         transition_Matrix = (1-alpha)*transition_Matrix + alpha*(numerator/denominator)
     return transition_Matrix
-
-
-def thread_counter(l, init, N, gamma, transition_matrix, distanceMatrix, d_count, d_length, d_score):
-    np.random.seed()
-    transition_Matrix = transition_matrix.copy()
-    pathsMatrix = random_multi_path(transition_Matrix, init, N)
-    n = distanceMatrix.shape[0]  # number of cities
-    output_count = np.matrix(np.zeros((n,n)))
-    cost_paths = cost_multi_path(distanceMatrix, pathsMatrix)
-    output_score = cost_paths
-    paths_kept = np.where(cost_paths <= gamma)[1]
-    for k in paths_kept:
-        for i in range(pathsMatrix[k].shape[1]-1):
-            output_count[pathsMatrix[k,i], pathsMatrix[k,i+1]] += 1
-    d_count[l] = output_count
-    d_score[l] = output_score
-    d_length[l] = len(paths_kept)
-    return
 
 
 
@@ -229,6 +198,6 @@ def thread_counter(l, init, N, gamma, transition_matrix, distanceMatrix, d_count
 if __name__ == '__main__':
     t = time.time()
     print(dMat)
-    M = TSP_thread_parallel(rho=0.1, d=5, N=10000, distanceMatrix=dMat, alpha=0.99, init=1)
+    M = TSP_process_parallel(rho=0.05, d=3, N=50000, distanceMatrix=dMat, alpha=0.99, init=1)
     print(time.time()-t)
     heatmap(M, [str(i) for i in range(10)])
