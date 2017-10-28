@@ -120,14 +120,12 @@ def update_transition_matrix(transition_matrix, pathsMatrix, gamma, distanceMatr
     """
     transition_Matrix = transition_matrix.copy()
     n = distanceMatrix.shape[0]  # number of cities
+    output_count = np.matrix(np.zeros((n,n)))
     paths_kept = np.where(cost_multi_path(distanceMatrix, pathsMatrix) <= gamma)[1]
-    for i in range(0, n):
-        for j in range(0, n):
-            update_numerator = 0
-            for k in paths_kept:
-                if transition_presence(pathsMatrix[k, :], i, j):
-                    update_numerator += 1
-            transition_Matrix[i, j] = (1-alpha)*transition_Matrix[i, j] + alpha*update_numerator/len(paths_kept)
+    for k in paths_kept:
+        for i in range(pathsMatrix[k].shape[1]-1):
+            output_count[pathsMatrix[k,i], pathsMatrix[k,i+1]] += 1
+    transition_Matrix = (1-alpha)*transition_Matrix + alpha*output_count/len(paths_kept)
     return transition_Matrix
 
 
@@ -167,6 +165,6 @@ def TSP(rho, d, N, distanceMatrix, alpha, init):
 import time
 t = time.time()
 print(dMat)
-M = TSP(rho=0.1, d=5, N=10000, distanceMatrix=dMat, alpha=0.99, init=1)
+M = TSP(rho=0.05, d=3, N=50000, distanceMatrix=dMat, alpha=0.99, init=1)
 print(time.time()-t)
 heatmap(M, [str(i) for i in range(10)])
