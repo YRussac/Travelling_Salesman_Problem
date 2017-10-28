@@ -197,15 +197,16 @@ def TSP_thread_parallel_partial(rho, d, N, distanceMatrix, alpha, init):
 
 
 # Example of experiment
+if __name__ == '__main__':
+    t2 = time.time()
+    print(TSP_thread_parallel_partial(rho=0.1, d=5, N=8000, distanceMatrix=dMat, alpha=0.99, init=1))
+    print(time.time() - t2)
+
+
+
 # t = time.time()
 # print(nopar.TSP(rho=0.1, d=5, N=8000, distanceMatrix=dMat, alpha=0.99, init=1))
 # print(time.time()-t)
-
-
-t2 = time.time()
-print(TSP_thread_parallel_partial(rho=0.1, d=5, N=8000, distanceMatrix=dMat, alpha=0.99, init=1))
-print(time.time()-t2)
-
 
 # t3 = time.time()
 # print(TSP_thread_parallel_tot(rho=0.1, d=5, N=8000, distanceMatrix=dMat, alpha=0.99, init=1))

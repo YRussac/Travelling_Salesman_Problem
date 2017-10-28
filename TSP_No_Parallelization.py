@@ -9,9 +9,10 @@ np.random.seed(6)
 NVilles = 20
 P = 1/(NVilles-1)*np.matrix(np.ones((NVilles, NVilles)))-1/(NVilles-1)*np.identity(NVilles)
 # Generation of a distance matrix reproductible
-dMat = np.matrix(np.random.randint(1,NVilles,size=(NVilles,NVilles)))
+
+dMat = np.matrix(np.random.randint(1, NVilles, size=(NVilles, NVilles)))
 for i in range(NVilles):
-    dMat[i,i] = 0
+    dMat[i, i] = 0
 
 # Main function for non-parallelized
 
@@ -24,8 +25,8 @@ def cost_function(distanceMatrix, path):
     """
     res = 0
     for i in range(path.shape[1]-1):
-        res += distanceMatrix[path[0,i], path[0,i+1]]
-    res += distanceMatrix[path[0,-1], path[0,0]]
+        res += distanceMatrix[path[0, i], path[0, i + 1]]
+    res += distanceMatrix[path[0, -1], path[0, 0]]
     return res
 
 
@@ -164,9 +165,10 @@ def TSP(rho, d, N, distanceMatrix, alpha, init):
 
 
 # Example of experiment
-
-# t = time.time()
-# print(dMat)
-# M = TSP(rho=0.05, d=3, N=50000, distanceMatrix=dMat, alpha=0.99, init=1)
-# print(time.time()-t)
-# heatmap(M, [str(i) for i in range(10)])
+if __name__ == '__main__':
+    print("Execution of TSP_No_Parallelization")
+    t = time.time()
+    print(dMat)
+    M = TSP(rho=0.05, d=3, N=50000, distanceMatrix=dMat, alpha=0.99, init=1)
+    print(time.time() - t)
+    heatmap(M, [str(i) for i in range(10)])
