@@ -77,10 +77,12 @@ def TSP_process_parallel(rho, d, N, distanceMatrix, alpha, init):
         for j in jobs:
             j.join()
         # update gamma
+        print('Begin update gamma {}'.format(nopar.time.time() - t0))
         ordered_scores = np.sort(np.concatenate([d_score[i] for i in d_score.keys()], axis=1))
         Gamma = ordered_scores[0, nopar.math.ceil(rho * N)]
         gamma_list.append(Gamma)
 
+        print('End update gamma {}'.format(nopar.time.time() - t0))
         # generate counts for updating transition matrix
         jobs = [multiprocessing.Process(target=update_count_parallel, args=(j, Gamma, d_score[j], d_paths[j], d_count,
                                                                             d_length)) for j in range(4)]
