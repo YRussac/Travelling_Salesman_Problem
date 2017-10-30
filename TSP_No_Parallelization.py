@@ -127,7 +127,7 @@ def update_transition_matrix(transition_matrix, pathsMatrix, gamma, distanceMatr
     paths_kept = np.where(cost_multi_path(distanceMatrix, pathsMatrix) <= gamma)[1]
     for k in paths_kept:
         for i in range(pathsMatrix[k].shape[1]-1):
-            output_count[pathsMatrix[k,i], pathsMatrix[k,i+1]] += 1
+            output_count[pathsMatrix[k, i], pathsMatrix[k, i + 1]] += 1
     transition_Matrix = (1-alpha)*transition_Matrix + alpha*output_count/len(paths_kept)
     return transition_Matrix
 
@@ -169,6 +169,6 @@ if __name__ == '__main__':
     print("Execution of TSP_No_Parallelization")
     t = time.time()
     print(dMat)
-    M = TSP(rho=0.05, d=3, N=50000, distanceMatrix=dMat, alpha=0.99, init=1)
+    M = TSP(rho=0.05, d=3, N=500, distanceMatrix=dMat, alpha=0.99, init=1)
     print(time.time() - t)
     heatmap(M, [str(i) for i in range(10)])
