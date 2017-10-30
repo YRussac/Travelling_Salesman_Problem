@@ -10,7 +10,6 @@ def random_multi_path_gpu(P, init, N):
     n = P.shape[0]
     U = np.random.uniform(0,1, size=(n+1)*N)
     U = U.astype(np.float32)
-    P = np.matrix(1/(n-1)*np.ones((n,n)) - 1/(n-1)*np.identity(n))
     P = P.astype(np.float32)
     Pbis = np.matrix(np.zeros((N*n, n)))
     Pbis = Pbis.astype(np.float32)
@@ -252,13 +251,9 @@ def TSP(rho, d, N, distanceMatrix, alpha, init):
 
 # Example of experiment
 if __name__ == '__main__':
-    n = 4
-    transition_Matrix = np.matrix('0. 0. 1. 0.; 0. 0. 0. 1.; 0. 1. 0. 0.; 1. 0. 0. 0.')
-    print(random_multi_path_gpu(transition_Matrix, 0, 5))
-    print(random_multi_path(transition_Matrix, 0, 5))
-    '''print("Execution of TSP_No_Parallelization")
+    print("Execution of TSP_No_Parallelization")
     t = time.time()
     print(dMat)
     M = TSP(rho=0.05, d=3, N=50000, distanceMatrix=dMat, alpha=0.99, init=1)
     print(time.time() - t)
-    heatmap(M, [str(i) for i in range(10)])'''
+    heatmap(M, [str(i) for i in range(10)])
