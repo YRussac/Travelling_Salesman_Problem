@@ -1,7 +1,12 @@
-# importation
-import multiprocessing
+# Importation
+import math
 import numpy as np
+import time
+import multiprocessing
 import TSP_No_Parallelization as nopar
+
+
+# Main function for multiprocessing-parallelized code
 
 
 def paths_parallel(l, init, N, distanceMatrix, transition_matrix, d_paths, d_score):
@@ -58,10 +63,10 @@ def TSP_process_parallel(rho, d, N, distanceMatrix, alpha, init):
     n = distanceMatrix.shape[0] # number of cities
     transition_Matrix = 1/(n-1)*np.matrix(np.ones((n, n))) - 1/(n-1)*np.identity(n)
     gamma_list = []
-    t0 = nopar.time.time()
+    t0 = time.time()
     i = 0
     while not (nopar.gamma_stable(gamma_list, d)):
-        print('Iteration {}: {}'.format(i, nopar.time.time() - t0))
+        print('Iteration {}: {}'.format(i, time.time() - t0))
         print(gamma_list)
         i += 1
         manager = multiprocessing.Manager()
@@ -77,9 +82,9 @@ def TSP_process_parallel(rho, d, N, distanceMatrix, alpha, init):
         for j in jobs:
             j.join()
         # update gamma
-        print('Begin update gamma {}'.format(nopar.time.time() - t0))
+        print('Begin update gamma {}'.format(time.time() - t0))
         ordered_scores = np.sort(np.concatenate([d_score[i] for i in d_score.keys()], axis=1))
-        Gamma = ordered_scores[0, nopar.math.ceil(rho * N)]
+        Gamma = ordered_scores[0, math.ceil(rho * N)]
         gamma_list.append(Gamma)
 
         print('End update gamma {}'.format(nopar.time.time() - t0))
@@ -94,19 +99,3 @@ def TSP_process_parallel(rho, d, N, distanceMatrix, alpha, init):
         denominator = sum([d_length[i] for i in d_length.keys()])
         transition_Matrix = (1-alpha)*transition_Matrix + alpha*(numerator/denominator)
     return transition_Matrix
-
-
-
-
-# Example of experiment
-if __name__ == '__main__':
-    np.random.seed(6)
-    NVilles = 20
-    dMat = np.matrix(np.random.randint(1, NVilles, size=(NVilles, NVilles)))
-    for i in range(NVilles):
-        dMat[i, i] = 0
-    t = nopar.time.time()
-    print(dMat)
-    M = TSP_process_parallel(rho=0.05, d=3, N=50000, distanceMatrix=dMat, alpha=0.99, init=1)
-    print(nopar.time.time() - t)
-    nopar.heatmap(M, [str(i) for i in range(10)])

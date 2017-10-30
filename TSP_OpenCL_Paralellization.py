@@ -1,22 +1,14 @@
-import numpy as np
+# Importation
+import math
 import pyopencl as cl
-import os
+import numpy as np
+import time
 import TSP_No_Parallelization as nopar
-os.environ['PYOPENCL_COMPILER_OUTPUT'] = '1'
-os.environ['PYOPENCL_CTX'] = '1'
-
-# setting examples
-np.random.seed(6)
-NVilles = 10
-P = 1 / (NVilles - 1) * np.matrix(np.ones((NVilles, NVilles))) - 1 / (NVilles - 1) * np.identity(NVilles)
-# Generation of a distance matrix
-
-dMat = np.matrix(np.random.randint(1, NVilles, size=(NVilles, NVilles)))
-for i in range(NVilles):
-    dMat[i, i] = 0
 
 
-# Main function for non-parallelized
+##  Main function for GPU-parallelized code
+
+
 def random_multi_path_GPU(P, init, N):
     """
     :param P: The transition matrix
@@ -117,27 +109,17 @@ def TSP_GPU(rho, d, N, distanceMatrix, alpha, init):
     transition_Matrix = 1/(n-1)*np.matrix(np.ones((n, n))) - 1/(n-1)*np.identity(n)
     gamma_list = []
     i = 0
-    t0 = nopar.time.time()
+    t0 = time.time()
     while not (nopar.gamma_stable(gamma_list, d)):
-        print('Iteration {}: {}'.format(i, nopar.time.time() - t0))
+        print('Iteration {}: {}'.format(i, time.time() - t0))
         print('Evolution de la liste de Gamma:' + str(gamma_list))
         i += 1
         pathsMatrix = random_multi_path_GPU(transition_Matrix, init, N)
         # print('random_multi_paths {}: {}'.format(i, nopar.time.time()-t0))
         ordered_scores = np.sort(nopar.cost_multi_path(distanceMatrix, pathsMatrix=pathsMatrix))
-        Gamma = ordered_scores[0, nopar.math.ceil(rho * N)]
+        Gamma = ordered_scores[0, math.ceil(rho * N)]
         gamma_list.append(Gamma)
         transition_Matrix = nopar.update_transition_matrix(transition_matrix=transition_Matrix,
                                                            pathsMatrix=pathsMatrix, gamma=Gamma,
                                                            distanceMatrix=distanceMatrix, alpha=alpha)
     return transition_Matrix
-
-
-# Example of experiment
-if __name__ == '__main__':
-    print("Execution of TSP_GPU")
-    t = nopar.time.time()
-    print(dMat)
-    M = TSP_GPU(rho=0.05, d=3, N=5000, distanceMatrix=dMat, alpha=0.99, init=3)
-    print(nopar.time.time() - t)
-    # heatmap(M, [str(i) for i in range(10)])

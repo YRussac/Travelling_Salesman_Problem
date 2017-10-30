@@ -1,21 +1,13 @@
-# importation
-import numpy as np
+# Importation
 import math
-import threading
+import numpy as np
 import queue as qu
+import threading
 import TSP_No_Parallelization as nopar
-import time
 
 
-# setting examples
-P = 1/9*np.matrix(np.ones((10, 10)))-1/9*np.identity(10)
+# Main function for thread-parallelized code
 
-# generation of a random transition matrix
-dMat = np.matrix(np.random.randint(1,10,size=(10,10)))
-for i in range(10):
-    dMat[i, i] = 0
-
-# Main function for non-parallelized
 
 def thread_computation(init, N, gamma, transition_matrix, distanceMatrix, q_count, q_score):
     """
@@ -196,21 +188,7 @@ def TSP_thread_parallel_partial(rho, d, N, distanceMatrix, alpha, init):
 
 
 
-# Example of experiment
-if __name__ == '__main__':
-    t2 = time.time()
-    print(TSP_thread_parallel_partial(rho=0.1, d=5, N=8000, distanceMatrix=dMat, alpha=0.99, init=1))
-    print(time.time() - t2)
 
-
-
-# t = time.time()
-# print(nopar.TSP(rho=0.1, d=5, N=8000, distanceMatrix=dMat, alpha=0.99, init=1))
-# print(time.time()-t)
-
-# t3 = time.time()
-# print(TSP_thread_parallel_tot(rho=0.1, d=5, N=8000, distanceMatrix=dMat, alpha=0.99, init=1))
-# print(time.time()-t3)
 
 
 

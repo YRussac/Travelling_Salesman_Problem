@@ -1,20 +1,10 @@
-# importation
-import numpy as np
+# Importation
 import math
-from visualization import heatmap
+import numpy as np
 import time
 
-# setting examples
-np.random.seed(6)
-NVilles = 20
-P = 1/(NVilles-1)*np.matrix(np.ones((NVilles, NVilles)))-1/(NVilles-1)*np.identity(NVilles)
-# Generation of a distance matrix reproductible
 
-dMat = np.matrix(np.random.randint(1, NVilles, size=(NVilles, NVilles)))
-for i in range(NVilles):
-    dMat[i, i] = 0
-
-# Main function for non-parallelized
+# Main function for non-parallelized code
 
 
 def cost_function(distanceMatrix, path):
@@ -164,11 +154,3 @@ def TSP(rho, d, N, distanceMatrix, alpha, init):
     return transition_Matrix
 
 
-# Example of experiment
-if __name__ == '__main__':
-    print("Execution of TSP_No_Parallelization")
-    t = time.time()
-    print(dMat)
-    M = TSP(rho=0.05, d=3, N=500, distanceMatrix=dMat, alpha=0.99, init=1)
-    print(time.time() - t)
-    heatmap(M, [str(i) for i in range(10)])
