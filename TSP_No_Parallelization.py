@@ -15,7 +15,12 @@ def cost_function(distanceMatrix, path):
     """
     res = 0
     for i in range(path.shape[1]-1):
-        res += distanceMatrix[path[0, i], path[0, i + 1]]
+        try:
+            res += distanceMatrix[path[0, i], path[0, i + 1]]
+        except:
+            print(i)
+            print(i+1)
+            print(path[0,:])
     res += distanceMatrix[path[0, -1], path[0, 0]]
     return res
 
@@ -146,11 +151,12 @@ def TSP(rho, d, N, distanceMatrix, alpha, init):
         ordered_scores = np.sort(cost_multi_path(distanceMatrix, pathsMatrix=pathsMatrix))
         print(ordered_scores.shape)
         Gamma = ordered_scores[0, math.ceil(rho*N)]
-        gamma_list.append(Gamma)
+        if len(gamma_list) == 0:
+            gamma_list.append(Gamma)
+        elif (Gamma <= gamma_list[-1]):
+            gamma_list.append(Gamma)
         transition_Matrix = update_transition_matrix(transition_matrix=transition_Matrix,
                                                      pathsMatrix=pathsMatrix,
                                                      gamma=Gamma, distanceMatrix=distanceMatrix,
                                                      alpha=alpha)
     return transition_Matrix
-
-

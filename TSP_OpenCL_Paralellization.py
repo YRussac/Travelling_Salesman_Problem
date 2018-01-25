@@ -77,7 +77,7 @@ def random_multi_path_GPU(P, init, N):
         cumul[i] = 0.;
         z[i] = 0;
         cumul[i] += Pbis[i*n*n + current[i]*n + z[i]];
-        while(cumul[i] <= U[i*n+j]){
+        while(cumul[i] < U[i*n+j]){
             z[i]++;
             cumul[i] += Pbis[i*n*n + current[i]*n + z[i]];
         }
@@ -118,7 +118,10 @@ def TSP_GPU(rho, d, N, distanceMatrix, alpha, init):
         # print('random_multi_paths {}: {}'.format(i, nopar.time.time()-t0))
         ordered_scores = np.sort(nopar.cost_multi_path(distanceMatrix, pathsMatrix=pathsMatrix))
         Gamma = ordered_scores[0, math.ceil(rho * N)]
-        gamma_list.append(Gamma)
+        if len(gamma_list) == 0:
+            gamma_list.append(Gamma)
+        elif (Gamma <= gamma_list[-1]):
+            gamma_list.append(Gamma)
         transition_Matrix = nopar.update_transition_matrix(transition_matrix=transition_Matrix,
                                                            pathsMatrix=pathsMatrix, gamma=Gamma,
                                                            distanceMatrix=distanceMatrix, alpha=alpha)
