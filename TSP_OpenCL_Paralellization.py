@@ -94,7 +94,7 @@ def random_multi_path_GPU(P, init, N):
     return np.matrix(chem_gen)
 
 
-def TSP_GPU(rho, d, N, distanceMatrix, alpha, init):
+def TSP_GPU(rho, d, N, distanceMatrix, alpha, init, timer=False):
     """
     :param rho: A cross entropy parameter
     :param d: The number of times we want gamma to be the same, higher values should give more optimal paths but
@@ -103,8 +103,11 @@ def TSP_GPU(rho, d, N, distanceMatrix, alpha, init):
     :param distanceMatrix: The matrix giving the distance between different points in the graph
     :param alpha: A parameter for the cross-entropy
     :param init: The initial point for all the cities. We are searching an optimal solution starting from this point
+    :param timer: If timer is true, stop after first iteration and return time
     :return: For the moment the function returns the transition matrix at the end of the updating phase
     """
+    if timer:
+        t0 = time.time()
     n = distanceMatrix.shape[0] # number of cities
     transition_Matrix = 1/(n-1)*np.matrix(np.ones((n, n))) - 1/(n-1)*np.identity(n)
     gamma_list = []
@@ -125,4 +128,6 @@ def TSP_GPU(rho, d, N, distanceMatrix, alpha, init):
         transition_Matrix = nopar.update_transition_matrix(transition_matrix=transition_Matrix,
                                                            pathsMatrix=pathsMatrix, gamma=Gamma,
                                                            distanceMatrix=distanceMatrix, alpha=alpha)
+        if timer:
+            return (time.time() - t0)
     return transition_Matrix

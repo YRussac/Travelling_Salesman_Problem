@@ -2,6 +2,7 @@
 import math
 import numpy as np
 import queue as qu
+import time
 import threading
 import TSP_No_Parallelization as nopar
 
@@ -40,7 +41,7 @@ def thread_computation(init, N, gamma, transition_matrix, distanceMatrix, q_coun
     return
 
 
-def TSP_thread_parallel_tot(rho, d, N, distanceMatrix, alpha, init):
+def TSP_thread_parallel_tot(rho, d, N, distanceMatrix, alpha, init, timer=False):
     """
     In this version parallelization on both the generation of paths and on updating process
     :param rho: A cross entropy parameter
@@ -50,8 +51,11 @@ def TSP_thread_parallel_tot(rho, d, N, distanceMatrix, alpha, init):
     :param distanceMatrix: The matrix giving the distance between different points in the graph
     :param alpha: A parameter for the cross-entropy
     :param init: The initial point for all the cities. We are searching an optimal solution starting from this point
+    :param timer: If timer is true, stop after first iteration and return time
     :return: For the moment the function returns the transition matrix at the end of the updating phase
     """
+    if timer:
+        t0 = time.time()
     n = distanceMatrix.shape[0]  # number of cities
     transition_Matrix = 1/(n-1)*np.matrix(np.ones((n, n))) - 1/(n-1)*np.identity(n)
     gamma_list = []
@@ -97,6 +101,8 @@ def TSP_thread_parallel_tot(rho, d, N, distanceMatrix, alpha, init):
             denominator = output_count1[(i,j)][1] + output_count2[(i,j)][1] + output_count3[(i, j)][1]\
                           + output_count4[(i, j)][1]
             transition_Matrix[i, j] = (1-alpha)*transition_Matrix[i,j] + alpha*numerator/denominator
+        if timer:
+            return (time.time() - t0)
     return transition_Matrix
 
 
@@ -125,7 +131,7 @@ def partial_thread_computation(pathMatrix, cost_paths,gamma, q_count):
     return None
 
 
-def TSP_thread_parallel_partial(rho, d, N, distanceMatrix, alpha, init):
+def TSP_thread_parallel_partial(rho, d, N, distanceMatrix, alpha, init, timer=False):
     """
     In this version parallelization on updating process
     :param rho: A cross entropy parameter
@@ -135,8 +141,11 @@ def TSP_thread_parallel_partial(rho, d, N, distanceMatrix, alpha, init):
     :param distanceMatrix: The matrix giving the distance between different points in the graph
     :param alpha: A parameter for the cross-entropy
     :param init: The initial point for all the paths. We are searching an optimal solution starting from this point
+    :param timer: If timer is true, stop after first iteration and return time
     :return: For the moment the function returns the transition matrix at the end of the updating phase
     """
+    if timer:
+        t0 = time.time()
     n = distanceMatrix.shape[0]  # number of cities
     print("Number of cities in the TSP_partial algorithm = " + str(n))
     transition_Matrix = 1/(n-1)*np.matrix(np.ones((n, n))) - 1/(n-1)*np.identity(n)
@@ -183,12 +192,6 @@ def TSP_thread_parallel_partial(rho, d, N, distanceMatrix, alpha, init):
             denominator = output_count1[(i, j)][1] + output_count2[(i,j)][1] + output_count3[(i, j)][1]\
                           + output_count4[(i, j)][1]
             transition_Matrix[i, j] = (1-alpha)*transition_Matrix[i,j] + alpha*numerator/denominator
+        if timer:
+            return (time.time() - t0)
     return transition_Matrix
-
-
-
-
-
-
-
-

@@ -14,7 +14,7 @@ os.environ['PYOPENCL_CTX'] = '1'
 # setting examples
 
 np.random.seed(6)
-NVilles = 100
+NVilles = 20
 TSP_method = 'GPU'  # different options are GPU, CPU, Threading, No_Par
 rho_exp = 0.05
 d_exp = 3

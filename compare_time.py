@@ -16,7 +16,7 @@ os.environ['PYOPENCL_CTX'] = '1'
 # setting examples
 
 np.random.seed(6)
-rangeVilles = [5, 10, 20, 30]
+rangeVilles = [5, 10, 20, 30, 40, 50, ]
 rho_exp = 0.05
 d_exp = 3
 rangeN_exp = [200, 500, 1000, 2000]
@@ -42,27 +42,26 @@ if __name__ == '__main__':
             dMat[i, i] = 0
 
         # No paralellization
-        t = time.time()
-        nopar.TSP(rho=rho_exp, d=d_exp, N=N_exp,
-                      distanceMatrix=dMat, alpha=alpha_exp, init=init_exp)
-        timeNopar.append(time.time()-t)
+        t = nopar.TSP(rho=rho_exp, d=d_exp, N=N_exp,
+                      distanceMatrix=dMat, alpha=alpha_exp, init=init_exp, timer=True)
+        timeNopar.append(t)
 
         # Threading parallelization
-        t = time.time()
-        threading_file.TSP_thread_parallel_partial(rho=rho_exp, d=d_exp, N=N_exp,
-                                                       distanceMatrix=dMat, alpha=alpha_exp, init=init_exp)
-        timeThread.append(time.time()-t)
+        t = threading_file.TSP_thread_parallel_partial(rho=rho_exp, d=d_exp, N=N_exp,
+                                                       distanceMatrix=dMat, alpha=alpha_exp,
+                                                       init=init_exp, timer=True)
+        timeThread.append(t)
 
         # Multiprocessing parallelization
-        t = time.time()
-        M = multiprocessing_file.TSP_process_parallel(rho=rho_exp, d=d_exp, N=N_exp,
-                                                      distanceMatrix=dMat, alpha=alpha_exp, init=init_exp)
-        timeProcess.append(time.time()-t)
+        t = multiprocessing_file.TSP_process_parallel(rho=rho_exp, d=d_exp, N=N_exp,
+                                                      distanceMatrix=dMat, alpha=alpha_exp,
+                                                      init=init_exp, timer=True)
+        timeProcess.append(t)
 
         # GPU parallelization
-        t = time.time()
-        M = opencl_file.TSP_GPU(rho=rho_exp, d=d_exp, N=N_exp, distanceMatrix=dMat, alpha=alpha_exp, init=init_exp)
-        timeGPU.append(time.time()-t)
+        t = opencl_file.TSP_GPU(rho=rho_exp, d=d_exp, N=N_exp, distanceMatrix=dMat,
+                                alpha=alpha_exp, init=init_exp, timer=True)
+        timeGPU.append(t)
 
     plt.figure(figsize=(10,10))
     plt.plot(rangeVilles, timeNopar, 'r--', rangeVilles, timeThread, 'bs',
