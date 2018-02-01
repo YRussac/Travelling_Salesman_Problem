@@ -78,12 +78,14 @@ def TSP_process_parallel(rho, d, N, distanceMatrix, alpha, init, timer=False):
         d_score = manager.dict()
         d_paths = manager.dict()
         # generate paths
+        ### BEGIN MULTI-PROCESSING ###
         jobs = [multiprocessing.Process(target=paths_parallel, args=(j, init, N // 4, distanceMatrix, transition_Matrix,
                                                                      d_paths, d_score)) for j in range(4)]
         for j in jobs:
             j.start()
         for j in jobs:
             j.join()
+        ### END MULTI-PROCESSING ###
         # update gamma
         print('Begin update gamma {}'.format(time.time() - t0))
         ordered_scores = np.sort(np.concatenate([d_score[i] for i in d_score.keys()], axis=1))
@@ -94,10 +96,12 @@ def TSP_process_parallel(rho, d, N, distanceMatrix, alpha, init, timer=False):
         # generate counts for updating transition matrix
         jobs = [multiprocessing.Process(target=update_count_parallel, args=(j, Gamma, d_score[j], d_paths[j], d_count,
                                                                             d_length)) for j in range(4)]
+        ### BEGIN MULTI-PROCESSING ###
         for j in jobs:
             j.start()
         for j in jobs:
             j.join()
+        ### END MULTI-PROCESSING ###
         numerator = sum([d_count[i] for i in d_count.keys()])
         denominator = sum([d_length[i] for i in d_length.keys()])
         transition_Matrix = (1-alpha)*transition_Matrix + alpha*(numerator/denominator)

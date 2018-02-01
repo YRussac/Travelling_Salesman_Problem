@@ -63,6 +63,8 @@ def TSP_thread_parallel_tot(rho, d, N, distanceMatrix, alpha, init, timer=False)
     while not(nopar.gamma_stable(gamma_list, d)):
         q_count = qu.Queue()
         q_score = qu.Queue()
+
+        ### BEGIN THREADING ###
         t1 = threading.Thread(name='first_thread', target=thread_computation,
                               args=(init, N//4, gamma,
                             transition_Matrix, distanceMatrix, q_count, q_score))
@@ -93,6 +95,7 @@ def TSP_thread_parallel_tot(rho, d, N, distanceMatrix, alpha, init, timer=False)
         output_count4 = q_count.get()
         ordered_scores = np.matrix(np.sort(np.concatenate((output_score1, output_score2,
                                                            output_score3, output_score4), axis=1)))
+        ### END THREADING ###
         Gamma = ordered_scores[0, math.ceil(rho*N)]
         gamma_list.append(Gamma)
         for i,j in list(output_count1.keys()):

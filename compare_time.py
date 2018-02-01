@@ -16,10 +16,10 @@ os.environ['PYOPENCL_CTX'] = '1'
 # setting examples
 
 np.random.seed(6)
-rangeVilles = [5, 10, 20, 30, 40, 50, ]
+rangeVilles = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 rho_exp = 0.05
 d_exp = 3
-rangeN_exp = [200, 500, 1000, 2000]
+rangeN_exp = [500, 1000, 3000, 5000, 8000, 12000, 17000, 24000, 32000, 45000, 60000]
 alpha_exp = 0.99
 init_exp = 1
 
@@ -32,7 +32,10 @@ if __name__ == '__main__':
     timeProcess = []
     timeGPU = []
 
+    ticks = []
+
     for NVilles, N_exp in zip(rangeVilles, rangeN_exp):
+        ticks.append("Villes={}\n Sim={}".format(NVilles, N_exp))
         print('Number of cities: {}'.format(NVilles))
 
         # generate distance matrix
@@ -66,6 +69,9 @@ if __name__ == '__main__':
     plt.figure(figsize=(10,10))
     plt.plot(rangeVilles, timeNopar, 'r--', rangeVilles, timeThread, 'bs',
              rangeVilles, timeProcess, 'g^', rangeVilles, timeGPU)
-    plt.title('Execution time of the algorithms with respect to the number of cities')
+    plt.title('Execution time of one iteration of algorithms')
+    plt.xticks(rangeVilles, ticks)
+    plt.xlabel('Parameters')
+    plt.ylabel('Time (s)')
     plt.legend(['No paralellization', 'Multi-threading', 'Multi-processing', 'GPU'], loc='best')
     plt.show()
