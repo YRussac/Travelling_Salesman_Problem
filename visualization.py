@@ -31,20 +31,31 @@ def draw_path(loc, Pmat, init):
     plt.show()
 
 
-def create_map(path):
+def create_map(cities, loc, Pmat, init):
+
+    # compute path
+    Pmatc = Pmat.copy()
+    path = [init]
+    k = 0
+    current = np.argmax(Pmatc[init,:])
+    while k < (Pmat.shape[0]):
+        path.append(current)
+        current = np.argmax(Pmatc[current,:])
+        Pmatc[:, current] = 0
+        k += 1
+    path.append(init)
+
+    # draw the map
     m = folium.Map(
-        location=[45.5236, -122.6750],
-        zoom_start=8)
-    folium.RegularPolygonMarker(
-        [45.5236, -122.6750],
-        fill_color='#43d9de',
-        radius=10,
-        popup='test'
-        ).add_to(m)
-    folium.RegularPolygonMarker(
-        [46.5236, -121.6750],
-        fill_color='#43d9de',
-        radius=10,
-        popup='test2'
-        ).add_to(m)
-    folium.PolyLine([[45.5236, -122.6750], [46.5236, -121.6750]], color="red", weight=2.5, opacity=0.8).add_to(m)
+        location=[48, 4],
+        zoom_start=1)
+
+    for i,l in enumerate(loc):
+        folium.Marker(
+            [l[0], l[1]],
+            popup=cities[i]
+            ).add_to(m)
+    points = [[loc[p][0], loc[p][1]] for p in path]
+    folium.PolyLine(points, color="red", weight=2.5, opacity=0.8).add_to(m)
+
+    m.save("./tsp.html")
